@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="570" viewBox="0 0 760 570" fill="none">
+  <rect width="760" height="570" rx="28" fill="#EAF0E5"/>
+  <circle cx="393" cy="270" r="195" fill="#DEE8D6"/>
+  <circle cx="393" cy="270" r="145" stroke="#D2DFC9" stroke-dasharray="5 10"/>
+  <path d="M130 427C243 388 510 386 638 428" stroke="#CCD9C2" stroke-width="2"/>
+  <ellipse cx="390" cy="436" rx="145" ry="18" fill="#D0DCC8"/>
+  <g transform="rotate(-12 380 285)">
+    <path d="M304 155Q377 133 450 155L450 394Q377 418 304 394Z" fill="#4E8A68"/>
+    <path d="M304 155Q324 173 327 396Q314 396 304 394Z" fill="#397652"/>
+    <path d="M431 158Q445 158 450 155L450 394Q443 400 432 400Z" fill="#70A181"/>
+    <ellipse cx="377" cy="155" rx="73" ry="17" fill="#C6D4C7"/>
+    <ellipse cx="377" cy="155" rx="61" ry="11" fill="#A4B9AA"/>
+    <ellipse cx="383" cy="153" rx="20" ry="7" fill="#6B8B77"/>
+    <path d="M304 391Q377 416 450 391L450 400Q377 424 304 400Z" fill="#B8C9BC"/>
+    <g transform="translate(377 257) scale(1.3)" fill="#F0F4E7">
+      <path d="M-17.5-3.5L-8.5-19L-11.5-21L-1-22.5L1.5-12L-2-14L-11 1.5Z"/>
+      <path d="M-17.5-3.5L-8.5-19L-11.5-21L-1-22.5L1.5-12L-2-14L-11 1.5Z" transform="rotate(120)"/>
+      <path d="M-17.5-3.5L-8.5-19L-11.5-21L-1-22.5L1.5-12L-2-14L-11 1.5Z" transform="rotate(240)"/>
+    </g>
+    <path d="M344 330H411" stroke="#AAD0AE" stroke-width="3" stroke-linecap="round"/>
+    <path d="M357 345H399" stroke="#AAD0AE" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(15 540 380)"><path d="M520 420C492 382 500 348 549 330C561 373 550 407 520 420Z" fill="#80A375"/><path d="M520 421L543 349" stroke="#577B51" stroke-width="2"/></g>
+  <g transform="rotate(-28 221 365)"><path d="M218 408C188 378 194 345 237 325C250 363 243 395 218 408Z" fill="#B1C69B"/><path d="M218 408L232 345" stroke="#7B9A65" stroke-width="2"/></g>
+  <rect x="457" y="116" width="128" height="43" rx="21.5" fill="#FFFDF7"/>
+  <circle cx="481" cy="138" r="9" fill="#28704D"/><path d="M477 138L480 141L485 135" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="499" y="143" fill="#2C4E38" font-family="Arial,sans-serif" font-size="13">Small action.</text>
+  <rect x="147" y="298" width="136" height="43" rx="21.5" fill="#FFFDF7"/>
+  <text x="168" y="325" fill="#2C4E38" font-family="Arial,sans-serif" font-size="13">Better tomorrow.</text>
+  <path d="M570 240L574 251L585 255L574 259L570 270L566 259L555 255L566 251Z" fill="#96B07E"/>
+  <path d="M217 175L220 183L228 186L220 189L217 197L214 189L206 186L214 183Z" fill="#96B07E"/>
+</svg>

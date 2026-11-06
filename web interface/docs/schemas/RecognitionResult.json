@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "submission_id": {
+      "title": "Submission Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "recognized",
+        "uncertain",
+        "unsupported"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "item_key": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Item Key",
+      "type": "string"
+    },
+    "item_name": {
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Item Name",
+      "type": "string"
+    },
+    "material": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Material",
+      "type": "string"
+    },
+    "condition": {
+      "enum": [
+        "clean",
+        "soiled",
+        "unknown"
+      ],
+      "title": "Condition",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "special": {
+      "default": false,
+      "title": "Special",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "submission_id",
+    "status",
+    "item_key",
+    "item_name",
+    "material",
+    "condition",
+    "confidence"
+  ],
+  "title": "RecognitionResult",
+  "type": "object"
+}

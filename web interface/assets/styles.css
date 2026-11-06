@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap');
+:root { --ink: #20382d; --muted: #617166; --green: #257451; }
+html { scroll-behavior: smooth; }
+.stApp { background: #f6f7f3; }
+.stApp, .stApp p, .stApp button, .stApp input, .stApp label { font-family: 'DM Sans', sans-serif; }
+h1,h2,h3 { font-family: 'Manrope', sans-serif !important; color: var(--ink); }
+.block-container { max-width: 1180px; padding: 2rem 2.5rem 1.5rem; }
+header[data-testid="stHeader"] { background: transparent; height: 0; }
+#MainMenu, footer { visibility: hidden; }
+.stAppDeployButton { display: none; }
+.st-key-sort_card { background: #fff; border-radius: 18px; padding: 22px !important; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0 24px; border-bottom: 1px solid #dde3d9; margin-bottom: 35px; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 800 26px 'Manrope',sans-serif; letter-spacing: -1px; }
+.brand-mark { background: #257451; border-radius: 12px; width: 37px; height: 37px; display: grid; place-items: center; color: white; font-size: 24px; }
+.brand span:last-child { color: #568060; }
+.nav { display: flex; align-items: center; gap: 29px; font-size: 13px; }
+.nav a { color: #4e6053; text-decoration: none; }
+.nav a:first-child { color: #205e40; font-weight: 700; }
+.demo-badge { border: 1px solid #d5dece; border-radius: 99px; padding: 7px 12px; color: #4c654b; font-size: 11px; font-weight: 600; background: #edf1e6; white-space: nowrap; }
+.eyebrow { color: #487456; font-size: 11px; letter-spacing: 2px; font-weight: 700; margin-bottom: 12px; }
+.hero h1 { font-size: clamp(34px,4.2vw,49px); font-weight: 800; line-height: 1.16; letter-spacing: -2.3px; margin: 0 0 14px; padding: 0; }
+.hero h1 span { color: #49815a; }
+.hero p { color: var(--muted); font-size: 15px; max-width: 550px; line-height: 1.7; margin: 0 0 29px; }
+.card-kicker { color: #5f7058; font-size: 10px; letter-spacing: 1.8px; font-weight: 700; }
+.card-title { font-size: 21px; font-weight: 750; margin: 5px 0 5px; letter-spacing: -.7px; }
+.card-copy { font-size: 13px; color: #6b786f; margin-bottom: 12px; line-height: 1.7; }
+[data-testid="stVerticalBlockBorderWrapper"] > div { border-radius: 18px !important; border-color: #dfe5db !important; }
+[data-testid="stVerticalBlockBorderWrapper"] { background: white; border-radius: 18px; }
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: .65rem; }
+[data-testid="stFileUploader"] { border-radius: 12px; }
+[data-testid="stFileUploaderDropzone"] { background: #f8faf6; border: 1px dashed #b8c9b5; border-radius: 12px; padding: 22px 16px; }
+[data-testid="stFileUploaderDropzone"] small { color: #617166; }
+.stButton > button, .stDownloadButton > button { border-radius: 9px; min-height: 43px; font-weight: 600; font-size: 13px; }
+.stButton > button[kind="primary"] { background: #257451; border: 1px solid #257451; box-shadow: 0 3px 7px #25745112; }
+.stButton > button[kind="primary"]:hover { background: #1d6042; border-color: #1d6042; }
+.stButton > button[kind="primary"]:disabled { background: #e0e8dc; border-color: #e0e8dc; color: #62735e; }
+.stButton > button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #927427 !important; outline-offset: 3px; }
+.stSelectbox label, .stFileUploader label { font-weight: 600; }
+.privacy { color: #68766b; font-size: 11px; text-align: center; margin: 4px 0; }
+.scene img { width: 100%; display: block; border-radius: 18px; }
+.scene { margin-top: 1px; }
+.scene-caption { display: flex; justify-content: space-between; margin: 12px 2px 19px; color: #66775d; font-size: 11px; }
+.tip { display: flex; gap: 12px; padding: 17px 18px; border: 1px solid #dee5d5; border-radius: 13px; background: #f0f3e9; }
+.tip-icon { font-size: 21px; color: #6d834d; }
+.tip strong { display: block; font-size: 12px; margin-bottom: 5px; }
+.tip p { color: #596a55; font-size: 12px; line-height: 1.65; margin: 0; }
+.section-heading { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid #dfe4da; padding-top: 26px; margin-top: 27px; margin-bottom: 18px; }
+.section-heading h2 { font-size: 18px; padding: 0; margin: 0; letter-spacing: -.5px; }
+.section-heading span { color: #72806f; font-size: 11px; }
+.step { display: flex; gap: 13px; padding-right: 15px; }
+.step-number { color: #4e7550; font-size: 11px; border: 1px solid #dbe3d3; background: #edf1e6; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; }
+.step h3 { font-size: 13px; margin: 0 0 6px; padding: 0; }
+.step p { font-size: 12px; line-height: 1.7; color: #677464; margin: 0; }
+.footer { border-top: 1px solid #dfe4da; margin-top: 30px; padding-top: 18px; display: flex; justify-content: space-between; color: #74806d; font-size: 11px; gap: 14px; }
+.result-heading { color: #257451; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; }
+.result-name { font: 750 28px 'Manrope',sans-serif; letter-spacing: -1px; margin: 8px 0; }
+.result-bin { border-left: 3px solid #49815a; background: #edf3e9; padding: 15px; border-radius: 0 9px 9px 0; margin: 17px 0; }
+.result-bin small { display: block; color: #57704e; font-size: 11px; margin-bottom: 4px; }
+.result-bin strong { font-size: 18px; }
+[data-testid="stExpander"] { background: #fff; border-radius: 12px; }
+.stApp [data-testid="stCaptionContainer"] p { font-size: 11px; color: #53654f !important; }
+@media (max-width: 768px) {
+ .block-container { padding: 1.3rem 1rem; }
+ .topbar { margin-bottom: 26px; padding-bottom: 18px; }
+ .brand { font-size: 23px; }
+ .nav { gap: 12px; }
+ .nav a { display: none; }
+ .hero h1 { letter-spacing: -1.5px; }
+ .hero p { font-size: 14px; }
+ [data-testid="stHorizontalBlock"] { flex-wrap: wrap; gap: 1rem; }
+ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important; }
+ .scene { margin-top: 8px; }
+ .scene img { max-height: 290px; object-fit: cover; }
+ .section-heading span { display: none; }
+ .step { margin-bottom: 5px; }
+ .footer { flex-direction: column; font-size: 10px; }
+}

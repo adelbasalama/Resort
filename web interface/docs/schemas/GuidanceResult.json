@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "submission_id": {
+      "title": "Submission Id",
+      "type": "string"
+    },
+    "region_id": {
+      "title": "Region Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "matched",
+        "missing_rule",
+        "special"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "category": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Category",
+      "type": "string"
+    },
+    "bin_label": {
+      "maxLength": 150,
+      "minLength": 1,
+      "title": "Bin Label",
+      "type": "string"
+    },
+    "preparation_steps": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Preparation Steps",
+      "type": "array"
+    },
+    "explanation": {
+      "maxLength": 2000,
+      "title": "Explanation",
+      "type": "string"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    },
+    "reviewed_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reviewed At"
+    },
+    "rule_version": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rule Version"
+    },
+    "is_fallback": {
+      "default": false,
+      "title": "Is Fallback",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "submission_id",
+    "region_id",
+    "status",
+    "category",
+    "bin_label",
+    "preparation_steps",
+    "explanation"
+  ],
+  "title": "GuidanceResult",
+  "type": "object"
+}
