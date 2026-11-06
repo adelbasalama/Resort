@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waste Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f3f4f6; color: #111827; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+            min-width: 0; overflow: hidden; }
+    .grid { display: grid; gap: 16px; margin-bottom: 16px; }
+    .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 800px) {
+      .charts { grid-template-columns: 1fr; }
+    }
+    .kpi-value { font-size: 1.8rem; font-weight: 600; }
+    .kpi-label { color: #6b7280; font-size: .85rem; }
+    form { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 16px; }
+    label { display: flex; flex-direction: column; font-size: .85rem; gap: 4px; }
+    select, button { padding: 6px 10px; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
+    .warning { background: #fef3c7; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+    .error { background: #fee2e2; }
+    .empty { color: #6b7280; padding: 40px 0; text-align: center; }
+    .plotly-graph-div { width: 100% !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Municipal Waste Dashboard</h1>
+
+  {% if error %}
+    <div class="warning error">{{ error }}</div>
+  {% endif %}
+  {% if skipped_rows %}
+    <div class="warning">{{ skipped_rows }} row(s) in the CSV were skipped because of invalid data.</div>
+  {% endif %}
+
+  <form method="get" id="filter-form">
+    <label>Region
+      <select name="region" onchange="this.form.submit()">
+        <option value="">All regions</option>
+        {% for r in regions %}
+          <option value="{{ r }}" {% if r == region %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Period type
+      <!-- Changing the type clears the period, because e.g. "2026-10" is not a valid year -->
+      <select name="period_type" onchange="this.form.elements['period'].value=''; this.form.submit()">
+        {% for t in period_types %}
+          <option value="{{ t }}" {% if t == period_type %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Period
+      <select name="period" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for p in periods %}
+          <option value="{{ p }}" {% if p == period %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <button type="submit">Apply</button>
+  </form>
+
+  {% if stats.total == 0 %}
+    <div class="card empty">No data for the selected filters.</div>
+  {% else %}
+    <div class="grid kpis">
+      <div class="card"><div class="kpi-value">{{ stats.total }}</div><div class="kpi-label">Total items</div></div>
+      <div class="card"><div class="kpi-value">{{ stats.recycling_rate }}</div><div class="kpi-label">Recycling rate</div></div>
+      <div class="card"><div class="kpi-value">{{ stats.counts.get("compostable", 0) }}</div><div class="kpi-label">Compostable</div></div>
+      <div class="card"><div class="kpi-value">{{ stats.counts.get("landfill", 0) }}</div><div class="kpi-label">Landfill</div></div>
+      <div class="card"><div class="kpi-value">{{ stats.counts.get("special", 0) }}</div><div class="kpi-label">Special</div></div>
+      {% if stats.counts.get("unknown") %}
+        <div class="card"><div class="kpi-value">{{ stats.counts.get("unknown") }}</div><div class="kpi-label">Unknown type</div></div>
+      {% endif %}
+    </div>
+
+    <div class="grid charts">
+      <div class="card">{{ pie_chart|safe }}</div>
+      <div class="card">{{ top_chart|safe }}</div>
+    </div>
+    <div class="grid">
+      <div class="card">{{ line_chart|safe }}</div>
+    </div>
+
+    <div class="card">
+      <h2>Latest scans (max. 50)</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Item</th><th>Type</th></tr></thead>
+        <tbody>
+          {% for row in stats.rows %}
+            <tr><td>{{ row.timestamp }}</td><td>{{ row.item_name }}</td><td>{{ row.waste_type }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</main>
+</body>
+</html>
