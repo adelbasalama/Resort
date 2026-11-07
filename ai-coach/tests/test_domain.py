@@ -4,7 +4,7 @@ from datetime import date
 from unittest.mock import patch
 from app.domain.models import Region, RecyclingRule, CoachExplanation
 from app.domain.services import CoachProviderError, RegionalGuidanceService, RuleNotFoundError
-from app.coach import GeminiCoach
+from app.coach import OpenAICoach, EducationText
 from app.domain.errors import InvalidGuidanceRequest, GuidanceUnavailable, PersistenceError
 from app.streaming.pipeline import StreamProcessor, FilterProcessor, MapProcessor, Pipeline, EventStream
 
@@ -68,28 +68,20 @@ class DomainTests(unittest.TestCase):
 
         self.assertTrue(service.explain(rule()).is_fallback)
 
-    @patch("app.coach.request.urlopen")
-    def test_gemini_coach_uses_configured_model(self, urlopen):
-        response = urlopen.return_value.__enter__.return_value
-        response.__enter__.return_value = response
-        response.__enter__.return_value.__iter__ = None
-        response.read.return_value = b'{"candidates":[{"content":{"parts":[{"text":"Use the yellow bin."}]}}]}'
+    @patch("app.coach.OpenAI")
+    def test_openai_coach_uses_reviewed_rule_and_configured_model(self, factory):
+        from types import SimpleNamespace
+        client = factory.return_value.__enter__.return_value
+        client.responses.parse.return_value = SimpleNamespace(
+            status="completed", output_parsed=EducationText(explanation="Use the Yellow bin. Empty it."))
+        text = OpenAICoach("test-key", model="gpt-4.1-mini")(rule())
+        self.assertIn("Yellow bin", text)
+        options = client.responses.parse.call_args.kwargs
+        self.assertEqual(options["model"], "gpt-4.1-mini")
+        self.assertFalse(options["store"])
+        self.assertIn("Yellow bin", options["input"])
+        self.assertEqual(factory.call_args.kwargs["max_retries"], 0)
 
-        # json.load reads the mocked response stream; use a real JSON response shape.
-        response.__enter__.return_value.read.return_value = (
-            b'{"candidates":[{"content":{"parts":[{"text":"Use the yellow bin."}]}}]}'
-        )
-        coach = GeminiCoach("test-key", model="gemini-2.5-flash-lite")
-
-        with patch("app.coach.json.load", return_value={
-            "candidates": [{"content": {"parts": [{"text": "Use the yellow bin."}]}}]
-        }):
-            text = coach(rule())
-
-        self.assertEqual(text, "Use the yellow bin.")
-        sent_request = urlopen.call_args.args[0]
-        self.assertIn("gemini-2.5-flash-lite:generateContent", sent_request.full_url)
-        self.assertEqual(sent_request.headers["X-goog-api-key"], "test-key")
     def test_service_records_the_selected_rule_version(self):
         repository = Repo(rule(version=3))
         service = RegionalGuidanceService(repository)

@@ -33,7 +33,7 @@ def load_regions(settings):
 
 
 def reset():
-    for key in ["result", "fingerprint", "request_id", "feedback_saved"]:
+    for key in ["result", "fingerprint", "request_id", "feedback_saved", "deposit_answer", "condition_answer"]:
         st.session_state.pop(key, None)
     st.session_state["upload_version"] = st.session_state.get("upload_version", 0) + 1
 
@@ -68,7 +68,29 @@ def main():
             if result:
                 region_name = next((r.name for r in regions if r.id == result.region_id), result.region_id)
                 result_view(result, region_name)
-                if result.status == "completed":
+                if result.guidance and result.guidance.needs_details:
+                    answers = {}
+                    if "deposit" in result.guidance.needs_details:
+                        answer = st.radio("Does the container have a Pfand/deposit or return marking?",
+                                          ["Not sure", "Yes", "No"], key="deposit_answer")
+                        if answer != "Not sure":
+                            answers["deposit"] = answer.lower()
+                    if "condition" in result.guidance.needs_details:
+                        answer = st.radio("Is the paper clean and dry, or heavily food/grease-soiled?",
+                                          ["Not sure", "Clean and dry", "Heavily food/grease-soiled"], key="condition_answer")
+                        if answer != "Not sure":
+                            answers["condition"] = "clean" if answer == "Clean and dry" else "soiled"
+                    st.caption("If you cannot establish this, check the item with your local waste provider.")
+                    if st.button("Update disposal advice", disabled=len(answers) != len(result.guidance.needs_details)):
+                        try:
+                            coordinator = SortCoordinator(repository, None, guidance)
+                            st.session_state.result = coordinator.refine(result.id, answers)
+                            st.rerun()
+                        except (ServiceError, ValueError) as exc:
+                            st.error(str(exc))
+                        except (OSError, sqlite3.Error):
+                            st.error("The updated result could not be saved. Please try again.")
+                if result.status == "completed" and not (result.guidance and result.guidance.needs_details):
                     st.divider()
                     st.markdown("**Was this helpful?**")
                     yes, no = st.columns(2)
@@ -101,7 +123,7 @@ def main():
                     image = ImageUpload(sample_image(sample_key), f"{sample_key}.png")
                     st.image(image.content, caption="Illustrated sample · not a real photo", width=300)
                     if settings.mode != "demo":
-                        st.caption("This example uses demo fixtures. Switch to Upload a photo for connected services.")
+                        st.caption("Illustrated recognition is a demo fixture; regional guidance comes from the connected coach.")
                 else:
                     uploaded = st.file_uploader("Add a photo of your item", type=["jpg", "jpeg", "png"],
                         key=f"photo_{st.session_state.get('upload_version', 0)}",
@@ -127,7 +149,7 @@ def main():
                     recognition = DemoRecognitionClient(sample_key) if is_demo else HttpRecognitionClient(
                         settings.recognition_url, settings.recognition_key, settings.recognition_timeout)
                     coordinator = SortCoordinator(repository, recognition,
-                        DemoGuidanceClient() if is_demo else guidance, is_demo=is_demo)
+                        DemoGuidanceClient() if settings.mode == "demo" else guidance, is_demo=is_demo)
                     try:
                         with st.spinner("Taking a closer look and checking the next step…"):
                             st.session_state.result = coordinator.identify(image, region.id, st.session_state.request_id)

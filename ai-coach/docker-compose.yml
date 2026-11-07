@@ -13,12 +13,15 @@ services:
   web:
     build: .
     environment:
+      HOST: 0.0.0.0
+      PORT: 5000
       MYSQL_HOST: db
       MYSQL_DATABASE: waste_assistant
       MYSQL_USER: capstone
       MYSQL_PASSWORD: capstone_dev
-      GEMINI_API_KEY: "REPLACE_WITH_GEMINI_API_KEY"
-      ADMIN_API_TOKEN: "REPLACE_WITH_ADMIN_API_TOKEN"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_COACH_MODEL: ${OPENAI_COACH_MODEL:-gpt-4.1-mini}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     ports: ["5000:5000"]
     depends_on: [db]
 volumes:

@@ -28,6 +28,8 @@ class RegionalGuidanceService:
     def explain(self, rule):
         fallback = "Place this item in the %s. %s Check the cited local guidance for the latest instructions." % (
             rule.bin_label, rule.preparation)
+        if len(fallback.split()) > 100:
+            fallback = f"Use {rule.bin_label}. Follow the preparation steps shown above and the cited local guidance."
         text, is_fallback = fallback, True
         if self.educator:
             try:

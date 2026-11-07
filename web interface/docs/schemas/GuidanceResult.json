@@ -87,6 +87,22 @@
       "default": false,
       "title": "Is Fallback",
       "type": "boolean"
+    },
+    "is_demo": {
+      "default": false,
+      "title": "Is Demo",
+      "type": "boolean"
+    },
+    "needs_details": {
+      "items": {
+        "enum": [
+          "deposit",
+          "condition"
+        ],
+        "type": "string"
+      },
+      "title": "Needs Details",
+      "type": "array"
     }
   },
   "required": [

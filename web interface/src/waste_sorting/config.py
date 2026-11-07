@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 
@@ -34,8 +35,12 @@ class Settings:
         )
         if min(settings.recognition_timeout, settings.guidance_timeout) <= 0:
             raise ValueError("Service timeouts must be positive.")
-        if mode == "http" and not all(
-            url.startswith("https://") for url in [settings.recognition_url, settings.guidance_url]
-        ):
-            raise ValueError("Configure HTTPS URLs for both subsystem services.")
+        allow_http = os.getenv("ALLOW_INSECURE_LOCAL_HTTP", "false").lower() == "true"
+        if mode == "http":
+            for url in [settings.recognition_url, settings.guidance_url]:
+                parsed = urlsplit(url)
+                if not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+                    raise ValueError("Configure valid service URLs without credentials, queries or fragments.")
+                if parsed.scheme != "https" and not (allow_http and parsed.scheme == "http"):
+                    raise ValueError("Configure HTTPS URLs, or explicitly enable local development HTTP.")
         return settings

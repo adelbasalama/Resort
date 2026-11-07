@@ -1,5 +1,5 @@
 # datetime is used to parse the timestamp text from the CSV into a real date/time
-from datetime import datetime
+from datetime import datetime, timezone
 
 WASTE_TYPES = ["recyclable", "compostable", "landfill", "special"]
 
@@ -10,6 +10,8 @@ class Submission:
     def __init__(self, region, timestamp, waste_type, item_name):
         self.region = region.strip() or "Unknown"
         self.timestamp = datetime.fromisoformat(timestamp.strip())
+        # Compare legacy naive CSV times and UTC/offset-aware stored times safely.
+        self.timestamp = self.timestamp.replace(tzinfo=timezone.utc) if self.timestamp.tzinfo is None else self.timestamp.astimezone(timezone.utc)
         waste_type = waste_type.strip().lower()
         self.waste_type = waste_type if waste_type in WASTE_TYPES else "unknown"
         self.item_name = item_name.strip() or "Unknown item"

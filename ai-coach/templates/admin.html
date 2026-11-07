@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReSort rules administration</title><style>
+body{font-family:system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem;background:#f5f7f4;color:#172b21}
+section{background:white;padding:1rem;margin:1rem 0;border-radius:10px}label{display:block;margin:.6rem 0}
+input,select,textarea,button{font:inherit;padding:.5rem;max-width:100%;box-sizing:border-box}input,textarea{width:100%}
+table{width:100%;border-collapse:collapse}td,th{padding:.5rem;text-align:left;border-bottom:1px solid #ddd}
+.scroll{overflow:auto}.message{padding:1rem;background:#e2efd9}.error{background:#ffe0db}
+</style></head><body><h1>Regional rules administration</h1>
+<p>Changes require the ADMIN_API_TOKEN from your private .env. Historical revisions and decisions are preserved.</p>
+{% if message %}<p class="message">{{ message }}</p>{% endif %}
+{% if error %}<p class="message error">{{ error }}</p>{% endif %}
+<form method="get"><label>Inspect region <select name="region_id" onchange="this.form.submit()">
+{% for region in regions %}<option value="{{ region.id }}" {% if region.id==selected %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+</select></label><button>View rules</button></form>
+<section><h2>Rules and history</h2><div class="scroll"><table><thead><tr><th>ID</th><th>Item</th><th>Condition</th><th>Category / bin</th><th>Version</th><th>Active</th><th>Source</th></tr></thead><tbody>
+{% for rule in rules %}<tr><td>{{rule.id}}</td><td>{{rule.item_key}}</td><td>{{rule.condition_label}}</td><td>{{rule.category}} / {{rule.bin_label}}</td><td>{{rule.version}}</td><td>{{rule.active}}</td><td><a href="{{rule.source_url}}" target="_blank" rel="noopener noreferrer">Source</a><br>{{rule.reviewed_on}}</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section><h2>Add or revise a rule</h2><p>Use canonical item keys. Deposit rules use the suffix _deposit. A new revision replaces only the active rule with the same region, item and condition.</p>
+<form method="post"><input type="hidden" name="action" value="rule">
+<label>Admin token<input type="password" name="token" required autocomplete="off"></label>
+<label>Region<select name="region_id">{% for region in regions %}<option value="{{region.id}}" {% if region.id==selected %}selected{% endif %}>{{region.name}}</option>{% endfor %}</select></label>
+<label>Item key<input name="item_key" required maxlength="100" placeholder="paper_bag"></label>
+<label>Condition<select name="condition"><option>any</option><option>clean</option><option>soiled</option><option>unknown</option></select></label>
+<label>Category<select name="category"><option>recyclable</option><option>compostable</option><option>landfill</option><option>special</option></select></label>
+<label>Bin label<input name="bin_label" required maxlength="150"></label>
+<label>Preparation instructions<textarea name="preparation" required maxlength="500"></textarea></label>
+<label>Official source URL<input type="url" name="source_url" required></label>
+<label>Date you checked the source<input type="date" name="reviewed_on" value="{{today}}" required></label><button>Save new revision</button></form></section>
+<section><h2>Add a region</h2><form method="post"><input type="hidden" name="action" value="region">
+<label>Admin token<input type="password" name="token" required autocomplete="off"></label>
+<label>Region ID<input name="region_id" required maxlength="64"></label><label>Name<input name="name" required maxlength="150"></label>
+<label>Official source URL<input name="source_url" type="url" required></label><button>Add region</button></form></section>
+<section><h2>Deactivate a rule</h2><form method="post"><input type="hidden" name="action" value="deactivate"><input type="hidden" name="region_id" value="{{selected}}">
+<label>Admin token<input type="password" name="token" required autocomplete="off"></label><label>Rule ID<input type="number" name="rule_id" min="1" required></label><button>Deactivate rule</button></form></section>
+</body></html>

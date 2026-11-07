@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Waste Dashboard</title>
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="{{ url_for('plotly_script') }}"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; background: #f3f4f6; color: #111827; }
     main { max-width: 1100px; margin: 0 auto; padding: 24px; }
@@ -32,15 +32,23 @@
 <body>
 <main>
   <h1>Municipal Waste Dashboard</h1>
+  <p>Completed disposal decisions, refreshed on each page load. Times are shown in UTC.</p>
+  {% if include_demo %}<div class="warning">Demo outcomes are included. These are not verified local disposal decisions.</div>{% endif %}
 
   {% if error %}
     <div class="warning error">{{ error }}</div>
   {% endif %}
   {% if skipped_rows %}
-    <div class="warning">{{ skipped_rows }} row(s) in the CSV were skipped because of invalid data.</div>
+    <div class="warning">{{ skipped_rows }} record(s) were skipped because of invalid data.</div>
   {% endif %}
 
   <form method="get" id="filter-form">
+    <label>Demo outcomes
+      <select name="include_demo" onchange="this.form.submit()">
+        <option value="0" {% if not include_demo %}selected{% endif %}>Exclude demo data</option>
+        <option value="1" {% if include_demo %}selected{% endif %}>Include demo data</option>
+      </select>
+    </label>
     <label>Region
       <select name="region" onchange="this.form.submit()">
         <option value="">All regions</option>

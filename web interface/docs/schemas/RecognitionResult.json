@@ -51,6 +51,28 @@
       "default": false,
       "title": "Special",
       "type": "boolean"
+    },
+    "predicted_category": {
+      "default": "unknown",
+      "enum": [
+        "recyclable",
+        "compostable",
+        "landfill",
+        "special",
+        "unknown"
+      ],
+      "title": "Predicted Category",
+      "type": "string"
+    },
+    "deposit": {
+      "default": "unknown",
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ],
+      "title": "Deposit",
+      "type": "string"
     }
   },
   "required": [

@@ -17,12 +17,16 @@ CREATE TABLE IF NOT EXISTS recycling_rules (
   UNIQUE KEY one_rule_version (region_id,item_key,condition_label,version),
   UNIQUE KEY one_active_rule (active_rule_key)
 );
-INSERT INTO regions(id,name,source_url) VALUES
+INSERT IGNORE INTO regions(id,name,source_url) VALUES
  ('demo-dortmund','Dortmund (demo rules)','https://www.dortmund.de/');
-INSERT INTO recycling_rules(region_id,item_key,category,bin_label,preparation,source_url,reviewed_on,version,condition_label) VALUES
+INSERT IGNORE INTO recycling_rules(region_id,item_key,category,bin_label,preparation,source_url,reviewed_on,version,condition_label) VALUES
  ('demo-dortmund','beverage_can','recyclable','Yellow recycling bin','Empty the can. Do not crush it.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
  ('demo-dortmund','banana_peel','compostable','Organic waste bin','Remove stickers and place the peel with organic waste.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
- ('demo-dortmund','battery','special','Battery collection point','Never place batteries in household bins. Use an authorized collection point.','https://www.dortmund.de/',CURRENT_DATE,1,'any');
+ ('demo-dortmund','battery','special','Battery collection point','Never place batteries in household bins. Use an authorized collection point.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
+ ('demo-dortmund','plastic_bottle','recyclable','Packaging collection','Check deposit return and local accepted plastics.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
+ ('demo-dortmund','plastic_container','recyclable','Packaging collection','Empty the container. Check local accepted plastics.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
+ ('demo-dortmund','paper_bag','recyclable','Paper collection','Keep paper clean and dry. Remove non-paper lining.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
+ ('demo-dortmund','glass_bottle','recyclable','Glass collection point','Check deposit return first. Check local colour separation.','https://www.dortmund.de/',CURRENT_DATE,1,'any');
 
 CREATE TABLE IF NOT EXISTS guidance_decisions (
   id BIGINT AUTO_INCREMENT PRIMARY KEY, region_id VARCHAR(64) NOT NULL,

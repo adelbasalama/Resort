@@ -32,15 +32,20 @@ class Repository:
 
     @contextmanager
     def connection(self):
-        with sqlite3.connect(self.path, timeout=10) as db:
+        db = sqlite3.connect(self.path, timeout=10)
+        try:
             db.execute("PRAGMA foreign_keys=ON")
-            yield db
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def save(self, submission: Submission):
         with self.connection() as db:
             db.execute("""INSERT INTO submissions VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET status=excluded.status,
-                updated_at=excluded.updated_at, outcome_json=excluded.outcome_json""",
+                updated_at=excluded.updated_at, is_demo=excluded.is_demo,
+                outcome_json=excluded.outcome_json""",
                 (submission.id, submission.region_id, submission.status,
                  submission.created_at.isoformat(), submission.updated_at.isoformat(),
                  int(submission.is_demo), submission.model_dump_json()))

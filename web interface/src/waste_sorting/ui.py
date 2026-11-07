@@ -80,8 +80,10 @@ def result_view(result, region_name):
         <div class="result-name">{escape(recognition.item_name)}</div>''')
     st.caption(f"{recognition.material} · {recognition.condition.capitalize()} · {region_name}")
     st.caption(f"Waste category: {guidance.category}")
+    if recognition.predicted_category != "unknown":
+        st.caption(f"AI predicted category: {recognition.predicted_category} · Final category follows local rules.")
     if result.is_demo:
-        st.info("Illustrative example, not photo recognition or verified local disposal advice.")
+        st.info("Demonstration result: this uses an illustrated item or example regional rules. Disposal advice is not verified locally.")
     elif recognition.special or guidance.status == "special":
         st.warning("Special handling required. Follow your local provider's instructions.")
     elif guidance.status == "missing_rule":
@@ -100,7 +102,7 @@ def result_view(result, region_name):
             st.caption(f"Reviewed {guidance.reviewed_at} · Rule version {guidance.rule_version}")
         if guidance.is_fallback:
             st.caption("Approved fallback explanation supplied by the regional service.")
-    confidence_label = "Fixture confidence" if result.is_demo else "Recognition confidence"
+    confidence_label = "Recognition confidence (demo outcome)" if result.is_demo else "Recognition confidence"
     st.caption(f"{confidence_label}: {recognition.confidence:.0%} · Reference {result.id[:8]}")
 
 

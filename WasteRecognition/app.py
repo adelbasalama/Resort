@@ -1,10 +1,11 @@
 """HomeTask3: Flask endpoints connected to the first two homeworks."""
 
+import os
 from flask import Flask, jsonify, request
 from mysql.connector import Error, IntegrityError
 from openai import OpenAIError, APITimeoutError
 from pydantic import ValidationError
-from image_recognizer import MAX_IMAGE_BYTES, recognize_waste
+from image_recognizer import MAX_IMAGE_BYTES, recognize_waste, recognize_contract
 from hometask1_waste_recognition import attempt_from_dict
 from hometask2_waste_stream import ConfidenceFilter, MaterialTransformer
 from database import RecognitionRepository
@@ -13,6 +14,11 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 11 * 1024 * 1024
 repository = RecognitionRepository()
 pipeline = ConfidenceFilter(0.80) + MaterialTransformer()
+
+
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok", "recognition_configured": bool(os.getenv("OPENAI_API_KEY"))})
 
 
 def save_result(data):
@@ -37,6 +43,7 @@ def home():
 
 
 @app.post("/recognize")
+@app.post("/v1/recognitions")
 def recognize_photo():
     upload = request.files.get("image")
     submission_id = request.form.get("submission_id", "").strip()
@@ -50,6 +57,8 @@ def recognize_photo():
     if len(image_bytes) > MAX_IMAGE_BYTES:
         return jsonify({"error": "The image must not exceed 10 MB."}), 413
     try:
+        if request.path == "/v1/recognitions":
+            return jsonify(recognize_contract(image_bytes, submission_id))
         result = recognize_waste(image_bytes, submission_id)
     except APITimeoutError:
         return jsonify({"error": "Image recognition timed out. Please try again."}), 504
@@ -113,4 +122,4 @@ def database_error(error):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "5001")), debug=False)

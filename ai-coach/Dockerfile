@@ -5,4 +5,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY templates ./templates
 COPY static ./static
+COPY seeds ./seeds
 CMD ["python", "-m", "app.main"]

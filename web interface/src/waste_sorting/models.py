@@ -28,6 +28,8 @@ class RecognitionResult(Contract):
     condition: Literal["clean", "soiled", "unknown"]
     confidence: float = Field(ge=0, le=1)
     special: bool = False
+    predicted_category: Literal["recyclable", "compostable", "landfill", "special", "unknown"] = "unknown"
+    deposit: Literal["yes", "no", "unknown"] = "unknown"
 
 
 class GuidanceResult(Contract):
@@ -42,6 +44,8 @@ class GuidanceResult(Contract):
     reviewed_at: str | None = None
     rule_version: int | None = Field(default=None, ge=1)
     is_fallback: bool = False
+    is_demo: bool = False
+    needs_details: list[Literal["deposit", "condition"]] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def require_provenance(self):

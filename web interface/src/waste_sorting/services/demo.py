@@ -39,4 +39,4 @@ class DemoRecognitionClient:
                 item_name="Your uploaded item", material="Unknown", condition="unknown", confidence=0)
         sample = SAMPLES[self.sample_key]
         return RecognitionResult(submission_id=submission_id, status="recognized", item_key=self.sample_key,
-            item_name=sample["name"], material=sample["material"], condition="clean", confidence=.97)
+            item_name=sample["name"], material=sample["material"], condition="clean", confidence=.97, deposit="no")

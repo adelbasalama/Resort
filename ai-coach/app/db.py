@@ -19,6 +19,16 @@ def connect():
 
 
 class MySQLRuleRepository:
+    def list_rules(self, region_id=None):
+        conn = connect()
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""SELECT * FROM recycling_rules WHERE (%s IS NULL OR region_id=%s)
+                ORDER BY region_id,item_key,condition_label,version DESC""", (region_id, region_id))
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
     def find_rule(self, region_id, item_key, condition="unknown"):
         try:
             conn = connect()
