@@ -1,5 +1,0 @@
-.venv/
-.local-mysql/
-.env.local
-.env
-__pycache__/

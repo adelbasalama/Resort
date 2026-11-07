@@ -220,19 +220,3 @@ def attempt_from_dict(data):
     if "routing_code" in data and data["routing_code"] != result.get_routing_code():
         raise ValueError("routing_code does not match the result.")
     return attempt
-
-
-def demo():
-    item = WasteItemType("beverage_can", "Beverage can", ["soda can", "drink can"])
-    attempt = RecognitionAttempt("attempt_004", "submission_004", "demo_model")
-    if item.matches("Soda can"):
-        result = RecognitionResult(
-            status="recognized", material="Aluminum", special=False,
-            item_key=item.get_item_key(), condition="unknown", confidence=0.88,
-        )
-        attempt.record_outcome(result)
-        print(attempt.to_dict())
-
-
-if __name__ == "__main__":
-    demo()
