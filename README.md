@@ -4,6 +4,29 @@ ReSort identifies household waste from a photo, combines the recognition with re
 
 This README is the central guide for all four subsystems. Class diagrams use Mermaid; GitHub renders them directly. Diagrams show the application classes and important relationships, with representative attributes and methods rather than every accessor. The separate `Submission`, `Region` and `RecognitionResult` classes in different subsystems belong to different modules and are not interchangeable Python objects.
 
+## Assignment 2 · Real-time data processing
+
+See the [conveyor stream class diagram](#conveyor-stream-processing-classes) and the [Python implementation](WasteRecognition/hometask2_waste_stream.py).
+
+| Required concept | Implementation |
+| --- | --- |
+| Abstract base class | `StreamProcessor.process()` is marked with `@abstractmethod`. |
+| Inheritance and polymorphism | `ConfidenceFilter`, `MaterialTransformer` and `Pipeline` implement the same `process()` interface. |
+| Operator overloading | `ConfidenceFilter(0.80) + MaterialTransformer()` composes the stages via `__add__`. |
+| Iterator and generators | `EventStream` implements `__iter__` and `__next__`. The input generator and `StreamProcessor.run()` produce events and results on demand. |
+
+From the repository root, run the simulated optical sorter. The sample requires no API key or database.
+
+```powershell
+python WasteRecognition/hometask2_waste_stream.py
+```
+
+`attempt_002` is filtered at 0.60 confidence. `attempt_001`, `attempt_003` and `attempt_004` route PET, HDPE and aluminum to `LANE_1`, `LANE_2` and `LANE_3` respectively. `attempt_007` has the same PET tag and confidence as `attempt_001`, but its smaller bounding box changes the route to `REVIEW`. To send events over HTTP, see the `POST /events` instructions in the stream section.
+
+### Pipeline presentation
+
+**Video link pending.** In the 5-minute demo, trace the class diagram, explain how `+` composes the two stages, and run the sample. Compare the two PET events and show where the low-confidence event is discarded. Add the direct video link here before submitting.
+
 ## Team overview
 
 **Group 8 · MDT · Waste Sorting & Recycling Assistant**
