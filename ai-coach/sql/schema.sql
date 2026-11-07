@@ -27,16 +27,3 @@ INSERT IGNORE INTO recycling_rules(region_id,item_key,category,bin_label,prepara
  ('demo-dortmund','plastic_container','recyclable','Packaging collection','Empty the container. Check local accepted plastics.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
  ('demo-dortmund','paper_bag','recyclable','Paper collection','Keep paper clean and dry. Remove non-paper lining.','https://www.dortmund.de/',CURRENT_DATE,1,'any'),
  ('demo-dortmund','glass_bottle','recyclable','Glass collection point','Check deposit return first. Check local colour separation.','https://www.dortmund.de/',CURRENT_DATE,1,'any');
-
-CREATE TABLE IF NOT EXISTS guidance_decisions (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY, region_id VARCHAR(64) NOT NULL,
-  item_key VARCHAR(100) NOT NULL, condition_label ENUM('any','clean','soiled','unknown') NOT NULL,
-  rule_id BIGINT NOT NULL, rule_version INT NOT NULL,
-  recognition_id VARCHAR(128) NULL,
-  recognition_confidence DECIMAL(5,4) NULL,
-  image_ref VARCHAR(500) NULL,
-  decided_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_decision_region FOREIGN KEY (region_id) REFERENCES regions(id),
-  CONSTRAINT fk_decision_rule FOREIGN KEY (rule_id) REFERENCES recycling_rules(id),
-  INDEX ix_decision_rule_version (rule_id,rule_version)
-);

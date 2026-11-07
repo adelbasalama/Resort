@@ -6,7 +6,6 @@ services:
       MYSQL_DATABASE: waste_assistant
       MYSQL_USER: capstone
       MYSQL_PASSWORD: capstone_dev
-    ports: ["3306:3306"]
     volumes:
       - mysql_data:/var/lib/mysql
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -19,15 +18,11 @@ services:
     build: .
     environment:
       HOST: 0.0.0.0
-      PORT: 5000
       MYSQL_HOST: db
       MYSQL_DATABASE: waste_assistant
       MYSQL_USER: capstone
       MYSQL_PASSWORD: capstone_dev
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_COACH_MODEL: ${OPENAI_COACH_MODEL:-gpt-4.1-mini}
-      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
-    ports: ["5000:5000"]
+    ports: ["127.0.0.1:5000:5000"]
     depends_on:
       db:
         condition: service_healthy
