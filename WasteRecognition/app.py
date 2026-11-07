@@ -9,6 +9,7 @@ from image_recognizer import MAX_IMAGE_BYTES, recognize_waste, recognize_contrac
 from hometask1_waste_recognition import attempt_from_dict
 from hometask2_waste_stream import ConfidenceFilter, MaterialTransformer
 from database import RecognitionRepository
+from recognition_errors import RecognitionError
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 11 * 1024 * 1024
@@ -48,26 +49,26 @@ def recognize_photo():
     upload = request.files.get("image")
     submission_id = request.form.get("submission_id", "").strip()
     if upload is None:
-        return jsonify({"error": "An image file is required."}), 400
+        raise RecognitionError("An image file is required.")
     if not 1 <= len(submission_id) <= 100:
-        return jsonify({"error": "A submission_id of 1 to 100 characters is required."}), 400
+        raise RecognitionError("A submission_id of 1 to 100 characters is required.")
     image_bytes = upload.read(MAX_IMAGE_BYTES + 1)
     if not image_bytes:
-        return jsonify({"error": "The image is empty."}), 400
+        raise RecognitionError("The image is empty.")
     if len(image_bytes) > MAX_IMAGE_BYTES:
-        return jsonify({"error": "The image must not exceed 10 MB."}), 413
+        raise RecognitionError("The image must not exceed 10 MB.", 413)
     try:
         if request.path == "/v1/recognitions":
             return jsonify(recognize_contract(image_bytes, submission_id))
         result = recognize_waste(image_bytes, submission_id)
-    except APITimeoutError:
-        return jsonify({"error": "Image recognition timed out. Please try again."}), 504
-    except OpenAIError:
-        return jsonify({"error": "Image recognition failed. Check the API key, quota and model settings."}), 502
-    except ValidationError:
-        return jsonify({"error": "The model returned an invalid recognition result."}), 502
+    except APITimeoutError as error:
+        raise RecognitionError("Image recognition timed out. Please try again.", 504) from error
+    except OpenAIError as error:
+        raise RecognitionError("Image recognition failed. Check the API key, quota and model settings.", 502) from error
+    except ValidationError as error:
+        raise RecognitionError("The model returned an invalid recognition result.", 502) from error
     except RuntimeError as error:
-        return jsonify({"error": str(error)}), 502
+        raise RecognitionError(str(error), 502) from error
     if result.get("status") == "filtered":
         return jsonify(result)
     return save_result(result)
@@ -107,6 +108,11 @@ def find_recognition(attempt_id):
 @app.errorhandler(ValueError)
 def invalid_input(error):
     return jsonify({"error": str(error)}), 400
+
+
+@app.errorhandler(RecognitionError)
+def recognition_error(error):
+    return jsonify({"error": str(error)}), error.status_code
 
 
 @app.errorhandler(IntegrityError)

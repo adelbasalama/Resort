@@ -39,6 +39,34 @@ recognition = load_module("recognition_server", "WasteRecognition/app.py")
 dashboard = load_module("dashboard_server", "subsystem4_dashboard/app.py")
 
 
+def test_conveyor_event_uses_box_area_to_route_material(monkeypatch):
+    saved = []
+    monkeypatch.setattr(recognition.repository, "save", lambda attempt: saved.append(attempt.to_dict()))
+    client = recognition.app.test_client()
+    event = {"submission_id": "stream-test", "model_id": "test-model", "confidence": 0.95,
+             "item_label": "water bottle", "visual_tags": ["PET"]}
+    for payload, status, expected in [
+        ({**event, "bbox": [0.1, 0.1, 0.4, 0.7]}, 201, "LANE_1"),
+        ({**event, "bbox": [0.1, 0.1, 0.15, 0.15]}, 201, "REVIEW"),
+        (event, 201, "LANE_1"),
+    ]:
+        response = client.post("/events", json=payload)
+        assert response.status_code == status
+        assert response.get_json()["material"] == "PET"
+        assert response.get_json()["routing_code"] == expected
+    response = client.post("/events", json={**event, "confidence": 0.6})
+    assert response.get_json()["status"] == "filtered"
+    assert [row["routing_code"] for row in saved] == ["LANE_1", "REVIEW", "LANE_1"]
+
+
+def test_invalid_conveyor_box_returns_recognition_error():
+    response = recognition.app.test_client().post("/events", json={
+        "confidence": 0.95, "visual_tags": ["PET"], "bbox": [0.4, 0.1, 0.1, 0.7],
+    })
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "bbox must have a positive width and height."}
+
+
 @pytest.fixture
 def image():
     stream = io.BytesIO()

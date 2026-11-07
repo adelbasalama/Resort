@@ -4,6 +4,17 @@ ReSort identifies household waste from a photo, combines the recognition with re
 
 This README is the central guide for all four subsystems. Class diagrams use Mermaid; GitHub renders them directly. Diagrams show the application classes and important relationships, with representative attributes and methods rather than every accessor. The separate `Submission`, `Region` and `RecognitionResult` classes in different subsystems belong to different modules and are not interchangeable Python objects.
 
+## Team overview
+
+**Group 8 · MDT · Waste Sorting & Recycling Assistant**
+
+| Team member | Assigned subsystem | Classes for the OOP demonstration |
+| --- | --- | --- |
+| Adel Abasalam Esmail Basalama | 1 · [Public interface](#4-subsystem-a--public-web-interface) | `ImageUpload`, `Submission`, `Feedback` |
+| Mahdi Yahia | 2 · [Waste recognition](#5-subsystem-b--waste-recognition) | `WasteItemType`, `RecognitionResult`, `RecognitionAttempt` |
+| Jayesh Patil | 3 · [Regional rules and AI coach](#6-subsystem-c--regional-rules-and-ai-coach) | `Region`, `RecyclingRule`, `CoachExplanation` |
+| Rashi Jain | 4 · [Municipal dashboard](#7-subsystem-d--municipal-dashboard) | `Submission`, `DataFilter`, `WasteData` |
+
 ## 1. Project structure and data flow
 
 | Subsystem | Directory | Role | Default address |
@@ -294,7 +305,7 @@ classDiagram
 
 `ImagePrediction` is the validated OpenAI output model. The live path uses module functions `prepare_image()`, `recognize_image()` and `recognize_contract()`; these are functions, not classes. The diagram's `RecognitionResult` is B's legacy domain class, distinct from A's Pydantic contract.
 
-### Retained stream-processing classes
+### Conveyor stream-processing classes
 
 ```mermaid
 classDiagram
@@ -332,7 +343,9 @@ classDiagram
     MaterialTransformer ..> RecognitionAttempt : builds and validates
 ```
 
-These classes preserve the original OOP/streaming exercises. The live v1 endpoint does not require B's MySQL repository. Older `/recognize`, `/events`, `/recognitions` and `/recognitions/<attempt_id>` endpoints retain the original smaller material catalogue and optional MySQL storage. To use that legacy path, configure `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, then initialize `WasteRecognition/schema.sql` through `database.py`. The integrated Docker application uses A's SQLite outcomes instead.
+The conveyor stream reads predictions lazily through `EventStream`. `ConfidenceFilter(0.80) + MaterialTransformer()` drops predictions below 0.80, maps visual tags to PET, HDPE or aluminum, and computes detection area from a normalized `bbox` of `[left, top, right, bottom]`. A box covering less than 1% of the frame sends the item to `REVIEW`, even when the tags suggest a material. Predictions without a box retain their original routing behavior. The 1% threshold is a demonstration setting for the simulated sorter.
+
+Run `python WasteRecognition/hometask2_waste_stream.py` from the repository root for a deterministic example. The same pipeline serves `POST /events`. That endpoint and the older `/recognize` and `/recognitions` routes use the recognition MySQL repository for stored results. Configure `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and initialize `WasteRecognition/schema.sql` through `database.py` to use those routes. The integrated photo endpoint, `POST /v1/recognitions`, returns its result to the public interface for storage. `RecognitionError` maps invalid uploads, malformed conveyor events and provider failures to HTTP responses.
 
 ## 6. Subsystem C — Regional rules and AI coach
 
@@ -522,6 +535,8 @@ classDiagram
 
 Only completed outcomes with matched/special guidance contribute to disposal statistics. Failed, uncertain, unsupported, pending-detail and missing-rule outcomes are excluded. Demo outcomes are excluded unless selected. Timestamps are normalized to UTC. `GET /api/stats` returns the filtered statistics; `/health` is the readiness endpoint. Set `DASHBOARD_CSV_PATH` only when intentionally using the original CSV path instead of live storage.
 
+`SubmissionStorageError` wraps SQLite read failures. The dashboard reports unavailable storage while preserving the healthy empty state before any submissions exist.
+
 ## 8. Databases and regional coverage
 
 | Data | Local Python | Docker storage | Tables |
@@ -582,7 +597,7 @@ Imports check integrity, expected tables and foreign keys and back up the previo
 .\.venv\Scripts\python.exe test_all.py
 ```
 
-The runner isolates the original suites to avoid their overlapping Python module names. Tests use temporary databases and controlled provider outputs; no paid AI calls are made. The latest functional validation passed **115 tests**: A 39, C 25, D 16, combined integration/data-management/launcher tests 35. Dashboard checks cover read-only WAL access, feedback display, live region rules and graceful storage/service failures. Docker build/start, upgrades preserving existing decisions, and database export/restore were also verified. These are integration checks, not a real-photo accuracy benchmark or a public-production certification.
+The runner isolates the suites to avoid overlapping Python module names. Tests use temporary databases and controlled provider outputs without making paid AI calls. Coverage includes conveyor filtering and routing, recognition input errors, dashboard read-only WAL access and storage failures, feedback, regional rules, and the integrated photo-to-guidance flow.
 
 | Problem | Action |
 | --- | --- |

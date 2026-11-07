@@ -5,16 +5,52 @@ WASTE_TYPES = ["recyclable", "compostable", "landfill", "special"]
 
 
 class Submission:
-    """One scanned waste item (= one row in the CSV)."""
+    """One scanned waste item from a submission database or CSV."""
 
     def __init__(self, region, timestamp, waste_type, item_name):
-        self.region = region.strip() or "Unknown"
-        self.timestamp = datetime.fromisoformat(timestamp.strip())
+        self.region = region
+        self.timestamp = timestamp
+        self.waste_type = waste_type
+        self.item_name = item_name
+
+    @property
+    def region(self):
+        return self._region
+
+    @region.setter
+    def region(self, value):
+        self._region = value.strip() or "Unknown"
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, value):
+        timestamp = datetime.fromisoformat(value.strip()) if isinstance(value, str) else value
+        if not isinstance(timestamp, datetime):
+            raise TypeError("timestamp must be ISO text or a datetime")
         # Compare legacy naive CSV times and UTC/offset-aware stored times safely.
-        self.timestamp = self.timestamp.replace(tzinfo=timezone.utc) if self.timestamp.tzinfo is None else self.timestamp.astimezone(timezone.utc)
-        waste_type = waste_type.strip().lower()
-        self.waste_type = waste_type if waste_type in WASTE_TYPES else "unknown"
-        self.item_name = item_name.strip() or "Unknown item"
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        self._timestamp = timestamp.astimezone(timezone.utc)
+
+    @property
+    def waste_type(self):
+        return self._waste_type
+
+    @waste_type.setter
+    def waste_type(self, value):
+        waste_type = value.strip().lower()
+        self._waste_type = waste_type if waste_type in WASTE_TYPES else "unknown"
+
+    @property
+    def item_name(self):
+        return self._item_name
+
+    @item_name.setter
+    def item_name(self, value):
+        self._item_name = value.strip() or "Unknown item"
 
     def getItemName(self):
         return self.item_name

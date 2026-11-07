@@ -5,19 +5,22 @@ import sqlite3
 from contextlib import closing, contextmanager
 from pathlib import Path
 
+from dashboard.errors import SubmissionStorageError
 from dashboard.waste_data import WasteData
 from dashboard.submission import Submission
 
 logger = logging.getLogger(__name__)
-STORAGE_ERROR = "Submission storage is unavailable. Check DATABASE_PATH and start the public interface."
 
 
 @contextmanager
 def read_only_database(path):
     # SQLite may need to create WAL sidecars even though records cannot be written.
-    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=10)) as db:
-        db.execute("PRAGMA query_only=ON")
-        yield db
+    try:
+        with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=10)) as db:
+            db.execute("PRAGMA query_only=ON")
+            yield db
+    except sqlite3.Error as error:
+        raise SubmissionStorageError() from error
 
 
 def load_submission_records(data_path, include_demo=False):
@@ -45,9 +48,9 @@ def load_submission_records(data_path, include_demo=False):
             except (ValueError, TypeError, AttributeError):
                 skipped += 1
         return records, skipped, None
-    except sqlite3.Error:
+    except SubmissionStorageError as error:
         logger.exception("Could not read submission history %s", path)
-        return records, skipped, STORAGE_ERROR
+        return records, skipped, str(error)
 
 
 class SubmissionStore(WasteData):
@@ -74,6 +77,6 @@ class SubmissionStore(WasteData):
                     self.submissions.append(Submission(region, timestamp, guidance["category"], recognition["item_name"]))
                 except (ValueError, KeyError, TypeError, AttributeError):
                     self.skipped_rows += 1
-        except sqlite3.Error:
+        except SubmissionStorageError as error:
             logger.exception("Could not read submission database %s", path)
-            self.error = STORAGE_ERROR
+            self.error = str(error)

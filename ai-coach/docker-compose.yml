@@ -10,6 +10,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -e "SELECT 1 FROM regions LIMIT 1"']
+      interval: 2s
+      timeout: 5s
+      retries: 30
   web:
     build: .
     environment:
@@ -23,6 +28,8 @@ services:
       OPENAI_COACH_MODEL: ${OPENAI_COACH_MODEL:-gpt-4.1-mini}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     ports: ["5000:5000"]
-    depends_on: [db]
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   mysql_data:

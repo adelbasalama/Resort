@@ -2,6 +2,22 @@
 
 from abc import ABC, abstractmethod
 from hometask1_waste_recognition import WasteItemType, attempt_from_dict
+from recognition_errors import RecognitionError
+
+
+MIN_BOX_AREA = 0.01  # Fraction of the camera frame for this demonstration sorter.
+
+
+def bounding_box_area(box):
+    if (not isinstance(box, list) or len(box) != 4 or any(
+        isinstance(coordinate, bool) or not isinstance(coordinate, (int, float))
+        or not 0 <= coordinate <= 1 for coordinate in box
+    )):
+        raise RecognitionError("bbox must contain four normalized numbers [left, top, right, bottom].")
+    left, top, right, bottom = box
+    if left >= right or top >= bottom:
+        raise RecognitionError("bbox must have a positive width and height.")
+    return (right - left) * (bottom - top)
 
 
 class StreamProcessor(ABC):
@@ -32,11 +48,11 @@ class ConfidenceFilter(StreamProcessor):
 
     def process(self, event):
         if not isinstance(event, dict):
-            raise ValueError("Send a JSON object.")
+            raise RecognitionError("Send a JSON object.")
         confidence = event.get("confidence")
         if (isinstance(confidence, bool) or not isinstance(confidence, (int, float))
                 or not 0 <= confidence <= 1):
-            raise ValueError("confidence must be a number between 0 and 1.")
+            raise RecognitionError("confidence must be a number between 0 and 1.")
         if confidence >= self.threshold:
             return event
         return None
@@ -56,13 +72,14 @@ class MaterialTransformer(StreamProcessor):
 
     def process(self, event):
         if not isinstance(event, dict):
-            raise ValueError("Send a JSON object.")
+            raise RecognitionError("Send a JSON object.")
         tags = event.get("visual_tags")
         if not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
-            raise ValueError("visual_tags must be a list of strings.")
+            raise RecognitionError("visual_tags must be a list of strings.")
         label = event.get("item_label", event.get("item_key", ""))
         if not isinstance(label, str):
-            raise ValueError("item_label must be text.")
+            raise RecognitionError("item_label must be text.")
+        area = bounding_box_area(event["bbox"]) if "bbox" in event else None
 
         materials = set()
         for tag in tags:
@@ -83,6 +100,9 @@ class MaterialTransformer(StreamProcessor):
         else:
             material = materials.pop()
             status = "recognized" if item_key else "uncertain"
+            # Keep the material candidate but divert undersized detections to review.
+            if area is not None and area < MIN_BOX_AREA:
+                status = "uncertain"
 
         data = event.copy()
         data.update(item_key=item_key, material=material, status=status)
@@ -119,22 +139,27 @@ def demo_events():
     """Sample predictions. IDs are supplied here so the examples are repeatable."""
     yield {"attempt_id": "attempt_001", "submission_id": "submission_001",
            "model_id": "demo_model", "confidence": 0.95,
-           "item_label": "water bottle", "visual_tags": ["PET"], "condition": "clean"}
+           "item_label": "water bottle", "visual_tags": ["PET"], "condition": "clean",
+           "bbox": [0.1, 0.1, 0.3, 0.6]}
     yield {"attempt_id": "attempt_002", "submission_id": "submission_002",
            "model_id": "demo_model", "confidence": 0.60,
-           "item_label": "soda can", "visual_tags": ["aluminum"]}
+           "item_label": "soda can", "visual_tags": ["aluminum"], "bbox": [0.2, 0.2, 0.4, 0.5]}
     yield {"attempt_id": "attempt_003", "submission_id": "submission_003",
            "model_id": "demo_model", "confidence": 0.90,
-           "item_label": "container", "visual_tags": ["HDPE"]}
+           "item_label": "container", "visual_tags": ["HDPE"], "bbox": [0.2, 0.2, 0.6, 0.7]}
     yield {"attempt_id": "attempt_004", "submission_id": "submission_004",
            "model_id": "demo_model", "confidence": 0.88,
-           "item_label": "soda can", "visual_tags": ["aluminium"]}
+           "item_label": "soda can", "visual_tags": ["aluminium"], "bbox": [0.2, 0.2, 0.4, 0.5]}
     yield {"attempt_id": "attempt_005", "submission_id": "submission_005",
            "model_id": "demo_model", "confidence": 0.92,
            "item_label": "glass jar", "visual_tags": ["glass"]}
     yield {"attempt_id": "attempt_006", "submission_id": "submission_006",
            "model_id": "demo_model", "confidence": 0.94,
            "item_label": "bottle", "visual_tags": ["PET", "HDPE"]}
+    yield {"attempt_id": "attempt_007", "submission_id": "submission_007",
+           "model_id": "demo_model", "confidence": 0.95,
+           "item_label": "water bottle", "visual_tags": ["PET"],
+           "bbox": [0.1, 0.1, 0.15, 0.15]}
 
 
 if __name__ == "__main__":

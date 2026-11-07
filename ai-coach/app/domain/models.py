@@ -10,10 +10,10 @@ class Region:
     name: str
     source_url: str
 
-    def __post_init__(self):
-        self.set_id(self.id)
-        self.set_name(self.name)
-        self.set_source_url(self.source_url)
+    def __init__(self, id: str, name: str, source_url: str):
+        self.set_id(id)
+        self.set_name(name)
+        self.set_source_url(source_url)
 
     def get_id(self): return self.id
     def set_id(self, value):
@@ -47,17 +47,41 @@ class RecyclingRule:
     condition: str = "any"
     active: bool = True
 
-    def __post_init__(self):
-        if int(self.id) < 0: raise ValueError("id cannot be negative")
-        self.id = int(self.id)
-        self.set_region_id(self.region_id)
-        self.set_item_key(self.item_key)
-        self.set_category(self.category)
-        self.set_bin_label(self.bin_label)
-        self.set_preparation(self.preparation)
-        self.set_source_url(self.source_url)
-        self.set_version(self.version)
-        self.set_condition(self.condition)
+    def __init__(self, region_id: str, item_key: str, category: str, bin_label: str,
+                 preparation: str, source_url: str, reviewed_on: date, id: int = 0,
+                 version: int = 1, condition: str = "any", active: bool = True):
+        self.set_id(id)
+        self.set_region_id(region_id)
+        self.set_item_key(item_key)
+        self.set_category(category)
+        self.set_bin_label(bin_label)
+        self.set_preparation(preparation)
+        self.set_source_url(source_url)
+        self.set_reviewed_on(reviewed_on)
+        self.set_version(version)
+        self.set_condition(condition)
+        self.set_active(active)
+
+    def get_id(self):
+        return self.id
+
+    def set_id(self, value):
+        identifier = int(value)
+        if identifier < 0:
+            raise ValueError("id cannot be negative")
+        self.id = identifier
+
+    def get_reviewed_on(self):
+        return self.reviewed_on
+
+    def set_reviewed_on(self, value):
+        self.reviewed_on = value
+
+    def get_active(self):
+        return self.active
+
+    def set_active(self, value):
+        self.active = value
 
     def get_region_id(self): return self.region_id
     def set_region_id(self, value): self.region_id = _required(value, "region_id")
@@ -98,9 +122,16 @@ class CoachExplanation:
     text: str
     is_fallback: bool = False
 
-    def __post_init__(self):
-        self.set_rule_id(self.rule_id)
-        self.set_text(self.text)
+    def __init__(self, rule_id: int, text: str, is_fallback: bool = False):
+        self.set_rule_id(rule_id)
+        self.set_text(text)
+        self.set_is_fallback(is_fallback)
+
+    def get_is_fallback(self):
+        return self.is_fallback
+
+    def set_is_fallback(self, value):
+        self.is_fallback = value
     def get_rule_id(self): return self.rule_id
     def set_rule_id(self, value):
         if int(value) < 1: raise ValueError("rule_id must be positive")

@@ -9,10 +9,16 @@ class WasteData:
     """Loads the CSV and calculates the statistics for the dashboard."""
 
     def __init__(self, data_path):
-        self.data_path = data_path
-        self.submissions = []
-        self.error = None
-        self.skipped_rows = 0
+        self._data_path = data_path
+        self.load()
+
+    @property
+    def data_path(self):
+        return self._data_path
+
+    @data_path.setter
+    def data_path(self, value):
+        self._data_path = value
         self.load()
 
     def load(self):

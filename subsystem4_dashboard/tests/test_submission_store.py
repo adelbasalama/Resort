@@ -7,7 +7,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dashboard.data_filter import DataFilter
-from dashboard.submission_store import SubmissionStore
+from dashboard.errors import SubmissionStorageError
+from dashboard.submission_store import SubmissionStore, read_only_database
 from app import app
 
 
@@ -74,6 +75,15 @@ def test_storage_failure_is_reported_by_health_endpoint(tmp_path, monkeypatch):
     response = app.test_client().get("/health")
     assert response.status_code == 503
     assert response.get_json()["status"] == "error"
+
+
+def test_dashboard_storage_error_wraps_the_sqlite_failure(tmp_path):
+    path = tmp_path / "invalid.sqlite3"
+    path.write_bytes(b"not a database")
+    with pytest.raises(SubmissionStorageError) as failure:
+        with read_only_database(path) as db:
+            db.execute("SELECT * FROM submissions")
+    assert isinstance(failure.value.__cause__, sqlite3.DatabaseError)
 
 
 def test_not_yet_created_submission_database_is_healthy_empty_state(tmp_path, monkeypatch):
