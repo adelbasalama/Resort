@@ -4,6 +4,19 @@ ReSort identifies household waste from a photo, combines the recognition with re
 
 This README is the central guide for all four subsystems. Class diagrams use Mermaid; GitHub renders them directly. Diagrams show the application classes and important relationships, with representative attributes and methods rather than every accessor. The separate `Submission`, `Region` and `RecognitionResult` classes in different subsystems belong to different modules and are not interchangeable Python objects.
 
+## Assignment 1 · Object-oriented concepts
+
+The [team overview](#team-overview) maps all four members to their assigned subsystems and the three classes each should present. Its subsystem links open the rendered class diagrams and point to the implementation. Each selected class has an explicit constructor. Configuration and validation use initialization helpers where needed, and mutable state has named accessors or Python properties with getters and setters.
+
+- **Subsystem 1:** Show `ImageUpload.validate()`, the `Submission` outcome update, and `Feedback.set_helpful()`.
+- **Subsystem 2:** Show how `WasteItemType` initializes synonyms, how `RecognitionResult` derives a route, and how `RecognitionAttempt` validates its result.
+- **Subsystem 3:** Show how `Region`, `RecyclingRule` and `CoachExplanation` initialize and validate their state.
+- **Subsystem 4:** Show the `Submission` normalization properties, `DataFilter.matches()` and how `WasteData` reloads when its data path changes.
+
+### Team presentation
+
+**Video link pending.** Record one 3–5 minute video. Each member presents their three classes alongside their subsystem diagram and explains one example of how the classes work together. Add the direct video link here before submitting.
+
 ## Team overview
 
 **Group 8 · MDT · Waste Sorting & Recycling Assistant**
