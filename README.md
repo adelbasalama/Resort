@@ -4,6 +4,40 @@ ReSort identifies household waste from a photo, combines the recognition with re
 
 This README is the central guide for all four subsystems. Class diagrams use Mermaid; GitHub renders them directly. Diagrams show the application classes and important relationships, with representative attributes and methods rather than every accessor. The separate `Submission`, `Region` and `RecognitionResult` classes in different subsystems belong to different modules and are not interchangeable Python objects.
 
+## Assignment 3 · Flask and MySQL
+
+**Group 8 · MDT · Waste Sorting & Recycling Assistant**
+
+| Team member | Student ID | Subsystem |
+| --- | --- | --- |
+| Adel Abasalam Esmail Basalama | 7225969 | 1 |
+| Mahdi Yahia | 7221528 | 2 |
+| Jayesh Patil | 7225971 | 3 |
+| Rashi Jain | 7225974 | 4 |
+
+The standalone AI coach runs Flask and MySQL 8.4. Its schema creates and seeds the `waste_assistant` database. Flask's `GET /v1/regions` calls `MySQLRuleRepository.list_regions()` and serializes the result as JSON. The standalone seed contains a labeled Dortmund demo region.
+
+From the repository root in PowerShell, start the standalone stack and request the regions:
+
+```powershell
+docker compose -p resort-assignment3 -f ai-coach/docker-compose.yml up -d --build
+(Invoke-RestMethod http://localhost:5000/v1/regions).regions
+```
+
+Expect `demo-dortmund` with the name `Dortmund (demo rules)`. This endpoint needs no OpenAI key. To compare the HTTP result with the database, open the MySQL client and enter the development password from the standalone Compose file at the prompt.
+
+```powershell
+docker compose -p resort-assignment3 -f ai-coach/docker-compose.yml exec db mysql -u capstone -p waste_assistant
+```
+
+```sql
+SELECT id, name, source_url FROM regions;
+```
+
+See [Flask routes](ai-coach/app/web/routes.py), the [MySQL repository](ai-coach/app/db.py), the [SQL schema](ai-coach/sql/schema.sql) and the [standalone Docker setup](ai-coach/docker-compose.yml). The integrated four-service stack uses SQLite.
+
+[GitHub submission branch](https://github.com/adelbasalama/Resort/tree/HomeworkAssignment3)
+
 ## Team overview
 
 **Group 8 · MDT · Waste Sorting & Recycling Assistant**
