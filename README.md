@@ -457,6 +457,7 @@ Open http://localhost:5002/admin to inspect rule IDs, sources and versions. Supp
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /v1/regions` | Regions available to A |
+| `GET /v1/rules` | Active rules and source links for the selected region in D |
 | `POST /v1/guidance` | Nested recognition facts to local disposal advice |
 | `GET /admin`, `POST /admin` | Rule administration page and token-protected changes |
 | `POST /api/admin/regions` | Token-protected region creation |
@@ -471,6 +472,8 @@ The v1 response carries category, bin label, preparation, explanation, provenanc
 **Entry point:** `subsystem4_dashboard/app.py`. **Classes:** `subsystem4_dashboard/dashboard/`.
 
 D reads A's SQLite outcomes using a read-only connection. `SubmissionStore` adapts those records to the same statistics interface as `WasteData`, which retains CSV support. `DataFilter` applies region and month/year/ISO-week filters. `ChartGenerator` builds Plotly composition, top-item and daily-count charts; the matching JavaScript is served locally.
+
+The sidebar links to **Dashboard**, **Submissions** and **Region Rules**. Dashboard shows analytics filters and charts. Submissions lists saved statuses with search, region filtering and pagination. Its last column shows feedback and stays blank when no feedback was submitted. Region Rules uses `GUIDANCE_API_URL` to display a read-only catalogue of active rules, including the condition, disposal instructions, source and version.
 
 ```mermaid
 classDiagram
@@ -579,7 +582,7 @@ Imports check integrity, expected tables and foreign keys and back up the previo
 .\.venv\Scripts\python.exe test_all.py
 ```
 
-The runner isolates the original suites to avoid their overlapping Python module names. Tests use temporary databases and controlled provider outputs; no paid AI calls are made. The latest functional validation passed **112 tests**: A 39, C 25, D 16, combined integration/data-management/launcher tests 32. Dashboard tests cover reopening WAL databases, reading new commits, rejecting record writes, and reporting storage failures through health checks. Docker build/start, upgrades preserving existing decisions, and database export/restore were also verified. These are integration checks, not a real-photo accuracy benchmark or a public-production certification.
+The runner isolates the original suites to avoid their overlapping Python module names. Tests use temporary databases and controlled provider outputs; no paid AI calls are made. The latest functional validation passed **115 tests**: A 39, C 25, D 16, combined integration/data-management/launcher tests 35. Dashboard checks cover read-only WAL access, feedback display, live region rules and graceful storage/service failures. Docker build/start, upgrades preserving existing decisions, and database export/restore were also verified. These are integration checks, not a real-photo accuracy benchmark or a public-production certification.
 
 | Problem | Action |
 | --- | --- |

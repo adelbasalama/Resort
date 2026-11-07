@@ -20,7 +20,7 @@ from app.web import routes
 from app.sqlite_db import SQLiteRuleRepository
 from app.domain.models import Region
 from app.domain.services import RegionalGuidanceService
-from waste_sorting.models import Feedback
+from waste_sorting.models import Feedback, Submission
 from waste_sorting.services.clients import HttpRecognitionClient, HttpGuidanceClient
 from waste_sorting.services.demo import DemoRecognitionClient
 from waste_sorting.storage import Repository
@@ -106,8 +106,9 @@ def test_photo_to_guidance_storage_feedback_and_dashboard(services, image, monke
     stats = httpx.get(d + "/api/stats").json()
     assert stats["total"] == 1 and stats["counts"] == {"recyclable": 1}
     assert httpx.get(d + "/api/stats", params={"region": "different-city"}).json()["total"] == 0
-    assert httpx.get(d + "/").status_code == 200
-    assert httpx.get(d + "/static/plotly.js").status_code == 200
+    # The first chart render initializes Plotly and can be slow on a cold Windows host.
+    assert httpx.get(d + "/", timeout=15).status_code == 200
+    assert httpx.get(d + "/static/plotly.js", timeout=15).status_code == 200
     with rules.connection() as db:
         row = db.execute("SELECT recognition_id, rule_version FROM guidance_decisions").fetchone()
         assert tuple(row) == (request_id, 1)
@@ -329,3 +330,57 @@ def test_streamlit_followup_updates_advice_without_new_photo_call(services, imag
     assert not app.exception
     assert "Pfand" in app.session_state["result"].guidance.bin_label
     provider.assert_called_once()
+
+
+def test_dashboard_submissions_shows_positive_negative_and_empty_feedback(services, image):
+    repository, _, (_, _, url) = services
+    for index, (name, helpful) in enumerate([("Paper bag", True), ("Drink can", False), ("Glass bottle", None)]):
+        identifier = f"feedback-record-{index}"
+        recognition = DemoRecognitionClient("can").recognize(image, identifier).model_copy(update={"item_name": name})
+        repository.save(Submission(id=identifier, region_id="dortmund", status="completed", recognition=recognition))
+        if helpful is not None:
+            repository.save_feedback(Feedback(submission_id=identifier, helpful=helpful))
+    repository.save(Submission(id="demo-record", region_id="demo-dortmund", is_demo=True, status="failed"))
+    response = httpx.get(url + "/submissions")
+    assert response.status_code == 200
+    assert '<th scope="col">Feedback</th></tr>' in response.text
+    assert '>Helpful</span>' in response.text and '>Not helpful</span>' in response.text
+    assert '<td class="feedback-cell"></td>' in response.text
+    assert "Unidentified item" not in response.text
+    assert "Unidentified item" in httpx.get(url + "/submissions?include_demo=1").text
+    filtered = httpx.get(url + "/submissions?q=glass").text
+    assert "Glass bottle" in filtered and "Paper bag" not in filtered
+    assert httpx.get(url + "/static/municipal.css").status_code == 200
+
+
+def test_region_rules_page_reads_current_active_rules_from_guidance(services, monkeypatch):
+    _, repository, (_, guidance_url, dashboard_url) = services
+    old_rule = repository.find_rule("hagen", "banana_peel")
+    old_rule.bin_label = "Updated HEB collection point"
+    repository.create_rule_revision(old_rule)
+    repository.deactivate_rule(repository.find_rule("hagen", "battery").id)
+    monkeypatch.setenv("GUIDANCE_API_URL", guidance_url)
+    response = httpx.get(dashboard_url + "/region-rules?region=hagen")
+    assert response.status_code == 200
+    assert "Updated HEB collection point" in response.text
+    assert "18 active rules" in response.text
+    assert "Dortmund (demo rules)" not in response.text
+    assert "Official source" in response.text
+    payload = httpx.get(guidance_url + "/v1/rules?region_id=hagen").json()
+    assert payload["selected"]["id"] == "hagen"
+    assert [r["version"] for r in payload["rules"] if r["item_key"] == "banana_peel"] == [2]
+    assert not any(r["item_key"] == "battery" for r in payload["rules"])
+
+
+def test_region_rules_outage_keeps_navigation_available(monkeypatch, tmp_path):
+    from urllib.error import URLError
+    def unavailable(*args, **kwargs):
+        raise URLError("test guidance outage")
+    monkeypatch.setattr(dashboard, "urlopen", unavailable)
+    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "empty.sqlite3"))
+    client = dashboard.app.test_client()
+    response = client.get("/region-rules")
+    assert response.status_code == 503
+    assert "Region rules are unavailable" in response.text
+    assert 'href="/submissions"' in response.text
+    assert client.get("/health").status_code == 200

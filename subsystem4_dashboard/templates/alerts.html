@@ -1,0 +1,3 @@
+{% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+{% if include_demo %}<div class="notice">Demo outcomes are included alongside real records.</div>{% endif %}
+{% if skipped_rows %}<div class="notice">{{ skipped_rows }} invalid record{% if skipped_rows != 1 %}s were{% else %} was{% endif %} skipped.</div>{% endif %}

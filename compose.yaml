@@ -59,6 +59,7 @@ services:
       HOST: 0.0.0.0
       PORT: 5003
       DATABASE_PATH: /data/waste_sorting.sqlite3
+      GUIDANCE_API_URL: http://guidance:5002
     # SQLite's WAL reader may need to create -wal/-shm sidecar files after a restart.
     # The application opens the database with mode=ro and PRAGMA query_only=ON.
     volumes: ["submissions:/data"]

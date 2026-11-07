@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Dashboard{% endblock %} · ReSort Municipal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='municipal.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="workspace">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('index', **demo_filter) }}" aria-label="ReSort dashboard">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 14c0-5 4-9 13-9 0 8-4 13-9 13-2 0-4-2-4-4Zm-1 7 10-10"/></svg>
+        </span>
+        <span><strong>ReSort</strong><small>Municipal</small></span>
+      </a>
+      <p class="nav-label">Workspace</p>
+      <nav class="navigation" aria-label="Municipal pages">
+        {% for endpoint, label, icon in [('index', 'Dashboard', 'dashboard'), ('submissions', 'Submissions', 'records'), ('region_rules', 'Region Rules', 'rules')] %}
+          <a href="{{ url_for(endpoint, **demo_filter) }}" {% if request.endpoint == endpoint %}aria-current="page"{% endif %}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+            {% if icon == 'dashboard' %}<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            {% elif icon == 'records' %}<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6m-6 4h6m-6 4h6"/>
+            {% else %}<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>{% endif %}
+            </svg>
+            <span>{{ label }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+      <div class="sidebar-foot"><span class="status-dot" aria-hidden="true"></span> Waste sorting analytics</div>
+    </aside>
+    <main class="main" id="main-content">
+      <div class="topline"><span>Municipal workspace</span><span class="topline-tag">ReSort</span></div>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

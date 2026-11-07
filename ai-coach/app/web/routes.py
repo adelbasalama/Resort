@@ -28,10 +28,31 @@ def configured_repository():
 service = RegionalGuidanceService(configured_repository(), educator=configured_coach())
 
 
+def _region_catalog():
+    return [{"id": r.id, "name": r.name, "source_url": r.source_url}
+            for r in sorted(service.repository.list_regions(), key=lambda r: (r.id != "dortmund", r.name))]
+
+
 @bp.get("/v1/regions")
 def regions():
-    return jsonify({"regions": [{"id": r.id, "name": r.name, "source_url": r.source_url}
-                                 for r in sorted(service.repository.list_regions(), key=lambda r: (r.id != "dortmund", r.name))]})
+    return jsonify({"regions": _region_catalog()})
+
+
+@bp.get("/v1/rules")
+def active_rules():
+    """Read-only rule catalogue. Editing and history remain in /admin."""
+    catalog = [region for region in _region_catalog() if not region["id"].startswith("demo-")]
+    selected = next((region for region in catalog if region["id"] == request.args.get("region_id")),
+                    catalog[0] if catalog else None)
+    rules = []
+    if selected:
+        fields = ("item_key", "category", "bin_label", "preparation", "source_url", "version", "condition_label")
+        for row in service.repository.list_rules(selected["id"]):
+            if row["active"]:
+                reviewed = row["reviewed_on"]
+                rules.append({**{field: row[field] for field in fields},
+                              "reviewed_on": reviewed.isoformat() if isinstance(reviewed, date) else reviewed})
+    return jsonify({"regions": catalog, "selected": selected, "rules": rules})
 
 
 @bp.route("/admin", methods=["GET", "POST"])

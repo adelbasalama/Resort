@@ -1,5 +1,9 @@
 from pathlib import Path
+import json
 import os
+from urllib.error import URLError
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from flask import Flask, render_template, request, jsonify, Response
 from plotly.offline import get_plotlyjs
@@ -8,9 +12,32 @@ from plotly.offline import get_plotlyjs
 from dashboard.charts import ChartGenerator
 from dashboard.data_filter import DataFilter
 from dashboard.waste_data import WasteData
-from dashboard.submission_store import SubmissionStore
+from dashboard.submission_store import SubmissionStore, load_submission_records
 
-app = Flask(__name__, template_folder=str(Path(__file__).resolve().parent / "templates"))
+ROOT = Path(__file__).resolve().parent
+app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
+PAGE_SIZE = 25
+CATEGORIES = {"recyclable": "Recyclable", "compostable": "Compostable", "landfill": "Residual waste",
+              "special": "Special handling", "unknown": "Unknown"}
+
+
+def database_path():
+    return os.getenv("DATABASE_PATH", str(ROOT.parent / "data/waste_sorting.sqlite3"))
+
+
+@app.template_filter("region_name")
+def region_name(value):
+    if value == "luenen":
+        return "Lünen"
+    if value.startswith("demo-"):
+        return f"{value[5:].replace('-', ' ').title()} (demo)"
+    return value.title()
+
+
+@app.context_processor
+def navigation_context():
+    return {"demo_filter": {"include_demo": 1} if request.args.get("include_demo") == "1" else {},
+            "category_labels": CATEGORIES}
 
 
 @app.get("/health")
@@ -25,8 +52,42 @@ def load_data():
     csv_path = os.getenv("DASHBOARD_CSV_PATH")
     if csv_path:
         return WasteData(csv_path)
-    path = os.getenv("DATABASE_PATH", str(Path(__file__).resolve().parents[1] / "data/waste_sorting.sqlite3"))
-    return SubmissionStore(path, include_demo=include_demo)
+    return SubmissionStore(database_path(), include_demo=include_demo)
+
+
+@app.get("/submissions")
+def submissions():
+    include_demo = request.args.get("include_demo") == "1"
+    records, skipped, error = load_submission_records(database_path(), include_demo)
+    regions = sorted({row["region"] for row in records}, key=region_name)
+    region = request.args.get("region", "")
+    query = request.args.get("q", "").strip()[:100]
+    matches = [row for row in records if (not region or row["region"] == region)
+               and (not query or query.casefold() in row["item_name"].casefold())]
+    pages = max(1, (len(matches) + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = min(pages, max(1, request.args.get("page", 1, type=int)))
+    start = (page - 1) * PAGE_SIZE
+    return render_template("submissions.html", records=matches[start:start + PAGE_SIZE],
+                           regions=regions, region=region, query=query, total=len(matches),
+                           page=page, pages=pages, include_demo=include_demo,
+                           skipped_rows=skipped, error=error), 503 if error else 200
+
+
+@app.get("/region-rules")
+def region_rules():
+    base_url = os.getenv("GUIDANCE_API_URL", "http://127.0.0.1:5002").rstrip("/")
+    selected_id = request.args.get("region", "")[:100]
+    try:
+        with urlopen(f"{base_url}/v1/rules?{urlencode({'region_id': selected_id})}", timeout=4) as response:
+            catalog = json.load(response)
+        regions, selected, rules = catalog["regions"], catalog["selected"], catalog["rules"]
+        if not isinstance(regions, list) or not isinstance(rules, list) or (selected is not None and not isinstance(selected, dict)):
+            raise ValueError("Invalid regional catalogue")
+    except (URLError, OSError, ValueError, KeyError, TypeError):
+        app.logger.exception("Could not load the regional rules catalogue")
+        return render_template("region_rules.html", regions=[], selected=None, rules=[],
+                               error="Region rules are unavailable. Try refreshing once the guidance service is running."), 503
+    return render_template("region_rules.html", regions=regions, selected=selected, rules=rules)
 
 
 @app.get("/api/stats")
