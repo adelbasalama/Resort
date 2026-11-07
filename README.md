@@ -4,6 +4,25 @@ ReSort identifies household waste from a photo, combines the recognition with re
 
 This README is the central guide for all four subsystems. Class diagrams use Mermaid; GitHub renders them directly. Diagrams show the application classes and important relationships, with representative attributes and methods rather than every accessor. The separate `Submission`, `Region` and `RecognitionResult` classes in different subsystems belong to different modules and are not interchangeable Python objects.
 
+## Assignment 4 · Exception handling and unit tests
+
+| Subsystem | Exception class | Application behavior |
+| --- | --- | --- |
+| 1 · Public interface | [`UploadError`](web%20interface/src/waste_sorting/uploads.py), [`ServiceError`](web%20interface/src/waste_sorting/services/clients.py) | Rejects invalid images and reports failures from downstream services. |
+| 2 · Waste recognition | [`RecognitionError`](WasteRecognition/recognition_errors.py) | Flask returns JSON with the appropriate status for malformed inputs, oversized images and provider failures. |
+| 3 · Regional rules and AI coach | [`SubsystemError` hierarchy](ai-coach/app/domain/errors.py) | Flask converts domain and persistence errors into structured JSON responses. |
+| 4 · Municipal dashboard | [`SubmissionStorageError`](subsystem4_dashboard/dashboard/errors.py) | The dashboard catches SQLite read failures, shows a storage message and reports unavailable storage from the API and health check. |
+
+Run the documented test suite from the repository root after installing dependencies.
+
+```powershell
+.\.venv\Scripts\python.exe test_all.py
+```
+
+Verified **118 passing tests** across the four subsystems and the combined suite. See the [recognition event tests](tests/test_integration.py) and [dashboard storage tests](subsystem4_dashboard/tests/test_submission_store.py) for coverage of the new error handling.
+
+[GitHub submission branch](https://github.com/adelbasalama/Resort/tree/HomeworkAssignment4)
+
 ## Team overview
 
 **Group 8 · MDT · Waste Sorting & Recycling Assistant**
