@@ -50,14 +50,15 @@ class ApplicationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.get_json()["error"], "admin_unauthorized")
 
-    def test_index_remains_available_when_database_is_unavailable(self):
+    def test_regions_returns_503_when_database_is_unavailable(self):
         with patch(
             "app.web.routes.service.repository.list_regions",
             side_effect=PersistenceError("database unavailable"),
         ):
-            response = self.client.get("/")
+            response = self.client.get("/v1/regions")
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json()["error"], "persistence_error")
 
 
 if __name__ == "__main__":

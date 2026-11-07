@@ -1,4 +1,4 @@
-"""15 focused unit tests for the capstone domain, streaming and errors."""
+"""Unit tests for guidance domain classes and error handling."""
 import unittest
 from datetime import date
 from unittest.mock import patch
@@ -6,7 +6,6 @@ from app.domain.models import Region, RecyclingRule, CoachExplanation
 from app.domain.services import CoachProviderError, RegionalGuidanceService, RuleNotFoundError
 from app.coach import OpenAICoach, EducationText
 from app.domain.errors import InvalidGuidanceRequest, GuidanceUnavailable, PersistenceError
-from app.streaming.pipeline import StreamProcessor, FilterProcessor, MapProcessor, Pipeline, EventStream
 
 
 def rule(**overrides):
@@ -90,10 +89,5 @@ class DomainTests(unittest.TestCase):
         service.record_decision("demo", "can", "clean", result["rule"])
 
         self.assertEqual(repository.saved, [("demo", "can", "clean", 1, 3)])
-    def test_abstract_processor_cannot_be_instantiated(self):
-        with self.assertRaises(TypeError): StreamProcessor()
-    def test_pipeline_filters_maps_and_iterates(self):
-        pipeline = FilterProcessor(lambda x: x["confidence"] >= .6) | MapProcessor(lambda x: x["item"].upper())
-        self.assertEqual(list(EventStream([{"confidence": .9, "item": "can"}, {"confidence": .2, "item": "cup"}], pipeline)), ["CAN"])
 
 if __name__ == "__main__": unittest.main()

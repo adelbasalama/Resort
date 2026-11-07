@@ -4,8 +4,8 @@ from datetime import date
 from pathlib import Path
 from collections.abc import Mapping
 
-from flask import Blueprint, jsonify, render_template, request
-from app.db import MySQLRuleRepository
+from flask import Blueprint, jsonify, request
+from app.sqlite_db import SQLiteRuleRepository
 from app.coach import configured_coach
 from app.domain.models import Region, RecyclingRule
 from app.domain.services import RegionalGuidanceService, RuleNotFoundError
@@ -15,15 +15,8 @@ from app.domain.errors import (
 
 bp = Blueprint("web", __name__)
 def configured_repository():
-    backend = os.getenv("RULES_BACKEND", "mysql")
-    if backend == "mysql":
-        return MySQLRuleRepository()
-    if backend == "sqlite":
-        from app.sqlite_db import SQLiteRuleRepository
-        path = os.getenv("RULES_DATABASE_PATH", str(Path(__file__).resolve().parents[3] / "data/rules.sqlite3"))
-        return SQLiteRuleRepository(path)
-    raise ValueError("RULES_BACKEND must be sqlite or mysql")
-
+    path = os.getenv("RULES_DATABASE_PATH", str(Path(__file__).resolve().parents[3] / "data/rules.sqlite3"))
+    return SQLiteRuleRepository(path)
 
 service = RegionalGuidanceService(configured_repository(), educator=configured_coach())
 
@@ -53,42 +46,6 @@ def active_rules():
                 rules.append({**{field: row[field] for field in fields},
                               "reviewed_on": reviewed.isoformat() if isinstance(reviewed, date) else reviewed})
     return jsonify({"regions": catalog, "selected": selected, "rules": rules})
-
-
-@bp.route("/admin", methods=["GET", "POST"])
-def admin_page():
-    message, error, status = None, None, 200
-    selected = request.values.get("region_id", "dortmund")
-    if request.method == "POST":
-        token = os.getenv("ADMIN_API_TOKEN", "").strip()
-        if not token or not hmac.compare_digest(request.form.get("token", ""), token):
-            error, status = "Administrator token is missing or incorrect.", 401
-        else:
-            try:
-                fields = request.form
-                if fields["action"] == "region":
-                    service.repository.create_region(Region(fields["region_id"], fields["name"], fields["source_url"]))
-                    message = "Region added."
-                elif fields["action"] == "rule":
-                    rule = RecyclingRule(region_id=fields["region_id"], item_key=fields["item_key"].strip().lower(),
-                        category=fields["category"], bin_label=fields["bin_label"], preparation=fields["preparation"],
-                        source_url=fields["source_url"], reviewed_on=date.fromisoformat(fields["reviewed_on"]),
-                        condition=fields["condition"])
-                    rule_id, version = service.repository.create_rule_revision(rule)
-                    message = f"Saved rule {rule_id}, version {version}. Previous decisions retain their original rule version."
-                elif fields["action"] == "deactivate":
-                    if not service.repository.deactivate_rule(int(fields["rule_id"])):
-                        raise ValueError("Rule ID does not exist.")
-                    message = "Rule deactivated."
-                else:
-                    raise ValueError("Unknown action.")
-            except (ValueError, KeyError) as exc:
-                error, status = str(exc), 400
-            except SubsystemError as exc:
-                error, status = str(exc), exc.status_code
-    return render_template("admin.html", regions=service.repository.list_regions(),
-                           rules=service.repository.list_rules(selected), selected=selected,
-                           today=date.today().isoformat(), message=message, error=error), status
 
 
 @bp.post("/v1/guidance")
@@ -147,12 +104,6 @@ def guidance_v1():
                     source_url=rule.source_url, reviewed_at=rule.reviewed_on.isoformat(),
                     rule_version=rule.version, is_fallback=explanation.is_fallback)
     return jsonify(response)
-
-@bp.get("/")
-def index():
-    try: regions = service.repository.list_regions()
-    except SubsystemError: regions = []
-    return render_template("index.html", regions=regions)
 
 @bp.post("/api/guidance")
 def guidance():

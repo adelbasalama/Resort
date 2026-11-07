@@ -4,7 +4,7 @@ from app.web.routes import bp
 from app.domain.errors import SubsystemError
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app = Flask(__name__)
     app.register_blueprint(bp)
     @app.errorhandler(SubsystemError)
     def handle_subsystem_error(error):

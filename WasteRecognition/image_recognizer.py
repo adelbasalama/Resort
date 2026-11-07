@@ -1,4 +1,4 @@
-"""Analyze an uploaded waste photo and return input for the existing pipeline."""
+"""Analyze an uploaded waste photo and return validated recognition facts."""
 
 import base64
 import os
@@ -8,7 +8,6 @@ from typing import Literal
 from openai import OpenAI
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field
-from hometask2_waste_stream import ConfidenceFilter, MaterialTransformer
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -118,15 +117,3 @@ def recognize_contract(image_bytes, submission_id):
             "condition": prediction.condition, "confidence": prediction.confidence,
             "special": prediction.special or key == "battery" or prediction.predicted_category == "special",
             "predicted_category": prediction.predicted_category, "deposit": prediction.deposit}
-
-
-def recognize_waste(image_bytes, submission_id):
-    """Receive JPEG/PNG bytes and return the shared result, without Flask or SQL."""
-    if not isinstance(submission_id, str) or not 1 <= len(submission_id.strip()) <= 100:
-        raise ValueError("A submission_id of 1 to 100 characters is required.")
-    prediction = recognize_image(image_bytes)
-    prediction["submission_id"] = submission_id.strip()
-    result = (ConfidenceFilter(0.80) + MaterialTransformer()).process(prediction)
-    if result is None:
-        return {"status": "filtered", "message": "Confidence is below 0.80; nothing was saved."}
-    return result

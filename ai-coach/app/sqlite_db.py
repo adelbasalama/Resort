@@ -1,11 +1,11 @@
-"""Local rules backend, with the same repository interface as MySQL."""
+"""Local SQLite rules repository."""
 import sqlite3
 import json
 from contextlib import contextmanager
+from datetime import date
 from pathlib import Path
 
-from app.db import _rule
-from app.domain.models import Region
+from app.domain.models import Region, RecyclingRule
 from app.domain.errors import PersistenceError
 
 
@@ -141,3 +141,11 @@ class SQLiteRuleRepository:
     def deactivate_rule(self, rule_id):
         with self.connection() as db:
             return db.execute("UPDATE recycling_rules SET active=0 WHERE id=?", (rule_id,)).rowcount == 1
+
+
+def _rule(row):
+    if isinstance(row["reviewed_on"], str): row["reviewed_on"] = date.fromisoformat(row["reviewed_on"])
+    return RecyclingRule(id=row["id"], region_id=row["region_id"], item_key=row["item_key"],
+        category=row["category"], bin_label=row["bin_label"], preparation=row["preparation"],
+        source_url=row["source_url"], reviewed_on=row["reviewed_on"], version=row["version"],
+        condition=row["condition_label"], active=bool(row["active"]))

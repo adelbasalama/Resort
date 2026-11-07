@@ -23,36 +23,6 @@ def read_only_database(path):
         raise SubmissionStorageError() from error
 
 
-def load_submission_records(data_path, include_demo=False):
-    """Read all statuses and attach the optional feedback without changing analytics."""
-    path = Path(data_path).resolve()
-    records, skipped = [], 0
-    if not path.exists():
-        return records, skipped, None
-    try:
-        with read_only_database(path) as db:
-            rows = db.execute("""SELECT s.id, s.region_id, s.created_at, s.status, s.is_demo,
-                s.outcome_json, f.helpful FROM submissions s
-                LEFT JOIN feedback f ON f.submission_id = s.id
-                WHERE (? OR s.is_demo=0) ORDER BY s.created_at DESC, s.id DESC""", (include_demo,)).fetchall()
-        for identifier, region, timestamp, status, demo, outcome_json, helpful in rows:
-            try:
-                outcome = json.loads(outcome_json)
-                recognition = outcome.get("recognition") or {}
-                guidance = outcome.get("guidance") or {}
-                submission = Submission(region, timestamp, guidance.get("category") or "unknown",
-                                        recognition.get("item_name") or "Unidentified item")
-                records.append({"id": identifier, "region": region, "timestamp": submission.timestamp,
-                                "item_name": submission.item_name, "category": guidance.get("category"),
-                                "status": status, "is_demo": bool(demo), "helpful": helpful})
-            except (ValueError, TypeError, AttributeError):
-                skipped += 1
-        return records, skipped, None
-    except SubmissionStorageError as error:
-        logger.exception("Could not read submission history %s", path)
-        return records, skipped, str(error)
-
-
 class SubmissionStore(WasteData):
     def __init__(self, data_path, include_demo=False):
         self.include_demo = include_demo
